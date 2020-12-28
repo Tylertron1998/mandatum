@@ -3,4 +3,4 @@
 
 # dotnet build/temp folders
 obj/
-build/
+bin/
