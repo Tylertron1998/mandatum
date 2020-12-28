@@ -1,0 +1,6 @@
+# IntelliJ specific stuff
+.idea/
+
+# dotnet build/temp folders
+obj/
+build/
