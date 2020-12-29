@@ -29,7 +29,7 @@ namespace Mandatum.Generators
 				name += signature;
 				name += ">";
 
-				var paramlist = string.Join(',', signature.Split(',').Select(x => x += $" {x.ToUpper()}"));
+				var paramlist = string.Join(",", signature.Split(',').Select(x => x += $" {x.ToUpper()}"));
                 
 				sb.AppendLine($"public interface {name}");
 				sb.AppendLine("{");

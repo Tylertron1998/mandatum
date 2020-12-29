@@ -1,6 +1,8 @@
 ﻿using System.Diagnostics;
+using System.Linq;
 using Mandatum.Generators.SyntaxReceivers;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 
 namespace Mandatum.Generators
 {
@@ -14,15 +16,45 @@ namespace Mandatum.Generators
 
 		public void Execute(GeneratorExecutionContext context)
 		{
-			var value = ParseOptions(context);
+			var options = ParseOptions(context);
 
-			var commandInterfacesSource = Utilities.BuildCommandInterfaces(value);
+			var commandInterfacesSource = Utilities.BuildCommandInterfaces(options.MaximumCommandArguments);
 			
-			context.AddSource("Mandatum.Interfaces.cs", commandInterfacesSource);
+			context.AddSource("Mandatum.CommandInterfaces.g.cs", commandInterfacesSource);
+
+			var interfaceSourceSyntaxTree = SyntaxFactory.ParseSyntaxTree(commandInterfacesSource);
+
+			var compilation = context.Compilation.AddSyntaxTrees(interfaceSourceSyntaxTree);
+			
+			var reciever = context.SyntaxReceiver as CommandSyntaxReceiver;
+
+			foreach (var node in interfaceSourceSyntaxTree.GetRoot().DescendantNodes())
+			{
+				reciever!.OnVisitSyntaxNode(node);
+			}
+
+			var symbols = reciever!.GetAllCommandsImplementingInterface(compilation);
+
+			foreach (var symbol in symbols)
+			{
+				var descripter = new DiagnosticDescriptor(
+					"MANDATUM002",
+					"TESTING IF THIS WORKS",
+					"found command named: {0} with arguments: {1}",
+					"Mandatum",
+					DiagnosticSeverity.Warning,
+					true);
+
+				var commandInterface = symbol.Interfaces.First(typeSymbol => typeSymbol.Name == "ICommand");
+
+				var arguments = string.Join(',', commandInterface.TypeArguments.Select(argument => argument.ToDisplayString()));
+				
+				context.ReportDiagnostic(Diagnostic.Create(descripter, Location.None, symbol.Name, arguments, symbol.Kind));
+			}
 
 		}
 
-		private static uint ParseOptions(GeneratorExecutionContext context)
+		private static Options ParseOptions(GeneratorExecutionContext context)
 		{
 			var options = context.AnalyzerConfigOptions.GlobalOptions;
 
@@ -34,7 +66,7 @@ namespace Mandatum.Generators
 				var descripter = new DiagnosticDescriptor(
 					"MANDATUM001",
 					"Couldn't parse 'maximum_command_arguments' parameter",
-					"Couldn't parse 'maximum_command_arguments' parameter due to invalid integer passed, got: {0}",
+					"Couldn't parse 'maximum_command_arguments' parameter due to invalid unsigned integer passed, got: {0}",
 					"Mandatum",
 					DiagnosticSeverity.Error,
 					true);
@@ -42,7 +74,7 @@ namespace Mandatum.Generators
 				context.ReportDiagnostic(Diagnostic.Create(descripter, Location.None, givenKey));
 			}
 
-			return value;
+			return new Options(value);
 		}
 	}
 }
