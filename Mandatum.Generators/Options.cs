@@ -1,5 +1,13 @@
 ﻿
 namespace Mandatum.Generators
 {
-	public record Options(uint MaximumCommandArguments);
+	public struct Options
+	{
+		public uint MaximumCommandArguments { get; set; }
+
+		public Options(uint maximumCommandArguments)
+		{
+			MaximumCommandArguments = maximumCommandArguments;
+		}
+	};
 }

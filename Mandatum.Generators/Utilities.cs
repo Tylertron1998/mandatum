@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using Microsoft.CodeAnalysis.Diagnostics;
 
@@ -11,7 +12,7 @@ namespace Mandatum.Generators
 			var sb = new StringBuilder();
 			sb.AppendLine("using System.Threading.Tasks;");
 			sb.AppendLine();
-			sb.AppendLine("namespace Mandatum.Interfaces");
+			sb.AppendLine("namespace Mandatum.Commands");
 			sb.AppendLine("{");
 
 			for (var i = 0; i < maximumCommandParams; i++)
@@ -46,6 +47,11 @@ namespace Mandatum.Generators
 			if (options.TryGetValue(key, out var value)) return value;
 			return defaultValue;
 		}
-		
+
+		public static void AddIfNotExists<T>(this HashSet<T> hashSet, T value)
+		{
+			if (hashSet.Contains(value)) return;
+			hashSet.Add(value);
+		}
 	}
 }

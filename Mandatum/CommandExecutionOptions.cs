@@ -1,4 +1,7 @@
-﻿$HEADER$namespace $NAMESPACE$
+﻿namespace Mandatum
 {
-  public struct $STRUCT$ {$END$}
+	public struct CommandExecutionOptions
+	{
+		public string Prefix { get; set; }
+	}
 }

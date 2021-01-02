@@ -1,4 +1,12 @@
-﻿$HEADER$namespace $NAMESPACE$
+﻿using System;
+using System.Diagnostics;
+
+namespace Mandatum.Commands
 {
-  public class $CLASS$ {$END$}
+	public class DelimiterAttribute : Attribute
+	{
+		public DelimiterAttribute(string value)
+		{
+		}
+	}
 }

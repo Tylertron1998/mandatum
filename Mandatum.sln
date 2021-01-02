@@ -4,6 +4,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mandatum.Generators", "Mand
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mandatum.TestProject", "Mandatum.TestProject\Mandatum.TestProject.csproj", "{7C2860B0-DD4F-4CAF-B7A4-C328AE85C708}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mandatum", "Mandatum\Mandatum.csproj", "{5B94A943-1716-4254-90E2-3C8A09BC5295}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -18,5 +20,9 @@ Global
 		{7C2860B0-DD4F-4CAF-B7A4-C328AE85C708}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7C2860B0-DD4F-4CAF-B7A4-C328AE85C708}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7C2860B0-DD4F-4CAF-B7A4-C328AE85C708}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5B94A943-1716-4254-90E2-3C8A09BC5295}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5B94A943-1716-4254-90E2-3C8A09BC5295}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5B94A943-1716-4254-90E2-3C8A09BC5295}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5B94A943-1716-4254-90E2-3C8A09BC5295}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

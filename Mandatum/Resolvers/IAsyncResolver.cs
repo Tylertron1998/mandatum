@@ -1,4 +1,9 @@
-﻿$HEADER$namespace $NAMESPACE$
+﻿using System.Threading.Tasks;
+
+namespace Mandatum.Resolvers
 {
-  public interface $INTERFACE$ {$END$}
+	public interface IAsyncResolver<T>
+	{
+		public Task<T> ResolveAsync(string message);
+	}
 }

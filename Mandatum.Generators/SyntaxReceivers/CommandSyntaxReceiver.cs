@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
 using Microsoft.CodeAnalysis;
@@ -44,29 +45,64 @@ namespace Mandatum.Generators.SyntaxReceivers
 				{
 					commands.Add(declaredSymbol);
 				}
-				
-				//
-				// commands.AddRange(interfaces.Where(x =>
-				// {
-				// 	bool equals = false;
-				// 	foreach (var commandInterface in GetCommandInterfaces(currentCompilation))
-				// 	{
-				// 		equals = SymbolEqualityComparer.Default.Equals(x.ConstructedFrom, commandInterface);
-				// 		if (equals)
-				// 		{
-				// 			ifc = x;
-				// 			break;
-				// 		}
-				// 	}
-				//
-				// 	return equals;
-				// }));
-
 			}
 
 			return commands;
 		}
-		
+
+		public IEnumerable<INamedTypeSymbol> GetSyncResolvers(Compilation currentCompilation)
+		{
+
+			// TODO: this is a complete mess
+			// TODO: add a class for this like we have for CommandDeclarationInfo
+
+			var resolvers = new List<INamedTypeSymbol>();
+			var intResolver = currentCompilation.GetTypeByMetadataName("Mandatum.Resolvers.Int32Resolver");
+			
+			resolvers.Add(intResolver); 
+			// TODO: this whole class is a mess. All of this logic should be extracted, and this should be handled by something else.
+			
+			foreach(var @class in _classes)
+			{
+				var semanticModel = currentCompilation.GetSemanticModel(@class.SyntaxTree);
+				var declaredSymbol = ModelExtensions.GetDeclaredSymbol(semanticModel, @class) as INamedTypeSymbol;
+
+				var interfaces = declaredSymbol.Interfaces;
+
+				foreach (var @interface in interfaces)
+				{
+					var members = @interface.GetMembers();
+					var methods = members.OfType<IMethodSymbol>();
+					if (methods.Any(method => method.Name == "Resolve" && EqualParams(method.Parameters, @interface.TypeParameters)))
+					{
+						resolvers.Add(declaredSymbol);
+					}
+				}
+				
+				bool EqualParams(ImmutableArray<IParameterSymbol> methodParameters, ImmutableArray<ITypeParameterSymbol> interfaceTypeParameters)
+				{
+					if (methodParameters.Length != interfaceTypeParameters.Length) return false;
+
+					for (var index = 0; index < methodParameters.Length; index++)
+					{
+						var methodParameter = methodParameters[index];
+						var interfaceGenericParameter = interfaceTypeParameters[index];
+
+						if (SymbolEqualityComparer.Default.Equals(methodParameter, interfaceGenericParameter))
+						{
+							return false;
+						}
+
+					}
+
+					return true;
+				}
+				
+			}
+
+			return resolvers;
+		}
+
 		private IEnumerable<INamedTypeSymbol> GetCommandInterfaces(Compilation compilation)
 		{
 			var commandInterfaces = new List<INamedTypeSymbol>();
@@ -77,7 +113,7 @@ namespace Mandatum.Generators.SyntaxReceivers
 				var symbol = ModelExtensions.GetDeclaredSymbol(semanticModel, @interface) as INamedTypeSymbol;
 
 				if (symbol.Name.StartsWith("ICommand") && symbol.IsGenericType &&
-				    symbol.ContainingNamespace.ToDisplayString() == "Mandatum.Interfaces")
+				    symbol.ContainingNamespace.ToDisplayString() == "Mandatum.Commands")
 				{
 					commandInterfaces.Add(symbol);
 				}

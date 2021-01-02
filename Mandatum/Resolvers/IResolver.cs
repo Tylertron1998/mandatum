@@ -1,4 +1,7 @@
-﻿$HEADER$namespace $NAMESPACE$
+﻿namespace Mandatum.Resolvers
 {
-  public interface $INTERFACE$ {$END$}
+	public interface IResolver<T>
+	{
+		T Resolve(string argument);
+	}
 }

@@ -3,11 +3,13 @@
     <PropertyGroup>
         <OutputType>Exe</OutputType>
         <TargetFramework>net5.0</TargetFramework>
+        <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+        <CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)\GeneratedFiles</CompilerGeneratedFilesOutputPath>
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="../Mandatum.Generators/Mandatum.Generators.csproj" 
-                          OutputItemType="Analyzer" ReferenceOutputAssembly="true" />
+        <ProjectReference Include="../Mandatum.Generators/Mandatum.Generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="true" />
+        <ProjectReference Include="..\Mandatum\Mandatum.csproj" />
     </ItemGroup>
 
 </Project>
