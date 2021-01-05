@@ -39,7 +39,6 @@ namespace Mandatum.Generators.Syntax
 
 				foreach (var @interface in commandInterfaces)
 				{
-					
 					// do any of the interfaces on this class equal the interfaces we considered to be a ICommand<T...>?
 					if (declaredSymbol.Interfaces.Any(commandInterface => SymbolEqualityComparer.Default.Equals(@interface)))
 					{
@@ -51,17 +50,18 @@ namespace Mandatum.Generators.Syntax
 			return commands;
 		}
 
-		public IEnumerable<INamedTypeSymbol> GetUserResolvers(IEnumerable<ClassDeclarationSyntax> classes)
+		/// <summary>
+		/// This method is used to lookup all user resolvers in the current compilation.
+		/// </summary>
+		/// <param name="classes">All classes present in the current compilation.</param>
+		/// <returns>A <see cref="IEnumerable{INamedTypeSymbol}"/> with all current resolvers.</returns>
+		public IEnumerable<INamedTypeSymbol> GetUserResolverSymbols(IEnumerable<ClassDeclarationSyntax> classes)
 		{
-
-			// TODO: this is a complete mess
-			// TODO: add a class for this like we have for CommandDeclarationInfo
-
 			var resolvers = new List<INamedTypeSymbol>();
-			// TODO: this whole class is a mess. All of this logic should be extracted, and this should be handled by something else.
-			
+
 			foreach(var @class in classes)
 			{
+				// again we need the semantic model to extract type information.
 				var semanticModel = _compilation.GetSemanticModel(@class.SyntaxTree);
 				var declaredSymbol = semanticModel.GetDeclaredSymbol(@class) as INamedTypeSymbol;
 
@@ -70,7 +70,11 @@ namespace Mandatum.Generators.Syntax
 				foreach (var @interface in interfaces)
 				{
 					var members = @interface.GetMembers();
+					// we're getting all members that are of type IMethodSymbol (i.e. all methods)
 					var methods = members.OfType<IMethodSymbol>();
+					
+					// if the method name is "Resolve" and the generic type parameters are equal to the method parameters, we can be
+					// fairly sure that this is actually a Resolver.
 					if (methods.Any(method => method.Name == "Resolve" && EqualParams(method.Parameters, @interface.TypeParameters)))
 					{
 						resolvers.Add(declaredSymbol);
@@ -79,21 +83,13 @@ namespace Mandatum.Generators.Syntax
 				
 				bool EqualParams(ImmutableArray<IParameterSymbol> methodParameters, ImmutableArray<ITypeParameterSymbol> interfaceTypeParameters)
 				{
-					if (methodParameters.Length != interfaceTypeParameters.Length) return false;
+					// if they have two different lengths, or either one does not have exactly 1 parameter, then no, it's almost certainly not a resolver.
+					if (methodParameters.Length != interfaceTypeParameters.Length || methodParameters.Length != 0) return false;
 
-					for (var index = 0; index < methodParameters.Length; index++)
-					{
-						var methodParameter = methodParameters[index];
-						var interfaceGenericParameter = interfaceTypeParameters[index];
+					var methodParameter = methodParameters.First();
+					var interfaceGenericParameter = interfaceTypeParameters.First();
 
-						if (SymbolEqualityComparer.Default.Equals(methodParameter, interfaceGenericParameter))
-						{
-							return false;
-						}
-
-					}
-
-					return true;
+					return SymbolEqualityComparer.Default.Equals(methodParameter, interfaceGenericParameter);
 				}
 				
 			}
@@ -101,15 +97,22 @@ namespace Mandatum.Generators.Syntax
 			return resolvers;
 		}
 
-		private IEnumerable<INamedTypeSymbol> GetCommandInterfaces(IEnumerable<InterfaceDeclarationSyntax> interfaces)
+		/// <summary>
+		/// This method is used for finding all interfaces we consider to be a ICommand<T...>.
+		/// </summary>
+		/// <param name="interfaces">All interfaces present in the current compilation.</param>
+		/// <returns>A <see cref="IEnumerable{INamedTypeSymbol}"/> representing all ICommand<T...>'s in the current compilation.</returns>
+		private IEnumerable<INamedTypeSymbol> GetICommandInterfaces(IEnumerable<InterfaceDeclarationSyntax> interfaces)
 		{
 			var commandInterfaces = new List<INamedTypeSymbol>();
 
 			foreach (var @interface in interfaces)
 			{
+				// again we need the semantic model for type info.
 				var semanticModel = _compilation.GetSemanticModel(@interface.SyntaxTree);
 				var symbol = semanticModel.GetDeclaredSymbol(@interface) as INamedTypeSymbol;
 
+				// does the symbol start with ICommand? Is it generic? Is it in the Mandatum.Commands namespace? If so then heck yeah!
 				if (symbol.Name.StartsWith("ICommand") && symbol.IsGenericType &&
 				    symbol.ContainingNamespace.ToDisplayString() == "Mandatum.Commands")
 				{
