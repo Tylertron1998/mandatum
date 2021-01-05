@@ -34,7 +34,7 @@ namespace Mandatum.Generators.Syntax
 				var declaredSymbol = semanticModel.GetDeclaredSymbol(@class) as INamedTypeSymbol;
 
 				// get all the interfaces we consider to be a ICommand<T...>
-				var commandInterfaces = GetCommandInterfaces(interfaces);
+				var commandInterfaces = GetICommandInterfaces(interfaces);
 
 
 				foreach (var @interface in commandInterfaces)
