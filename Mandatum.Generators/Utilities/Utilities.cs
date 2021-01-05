@@ -3,7 +3,7 @@ using System.Linq;
 using System.Text;
 using Microsoft.CodeAnalysis.Diagnostics;
 
-namespace Mandatum.Generators
+namespace Mandatum.Generators.Utilities
 {
 	public static class Utilities
 	{

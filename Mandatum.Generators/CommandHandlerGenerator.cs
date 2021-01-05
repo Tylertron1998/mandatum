@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Runtime.Serialization;
 using System.Text;
@@ -24,51 +25,33 @@ namespace Mandatum.Generators
 		{
 			var options = ParseOptions(context);
 
+			// create the text based source code for ICommand<T...>
 			var commandInterfacesSource = Utilities.BuildCommandInterfaces(options.MaximumCommandArguments);
 			
+			// add the source to the compilation
 			context.AddSource("Mandatum.Commands.cs", commandInterfacesSource);
 
+			// create a syntax tree for it
 			var interfaceSourceSyntaxTree = SyntaxFactory.ParseSyntaxTree(commandInterfacesSource);
 
+			// create a new compilation that has those syntax trees.
 			var compilation = context.Compilation.AddSyntaxTrees(interfaceSourceSyntaxTree);
 			
 			var reciever = context.SyntaxReceiver as CommandSyntaxReceiver;
 
-			foreach (var node in interfaceSourceSyntaxTree.GetRoot().DescendantNodes())
-			{
-				reciever.OnVisitSyntaxNode(node);
-			}
+			var syntaxFinder = new SyntaxFinder(compilation);
 
-			var commandSymbols = reciever.GetAllCommandsImplementingInterface(compilation);
 
-			foreach (var symbol in commandSymbols)
-			{
-				var descripter = new DiagnosticDescriptor(
-					"MANDATUM002",
-					"TESTING IF THIS WORKS",
-					"found command named: {0} with arguments: {1}",
-					"Mandatum",
-					DiagnosticSeverity.Warning,
-					true);
+			var commandSymbols = syntaxFinder.GetCommandSymbols(reciever.Classes, reciever.Interfaces);
 
-				var commandInterface = symbol.Interfaces.First(typeSymbol => typeSymbol.Name == "ICommand");
-
-				var arguments = string.Join(",", commandInterface.TypeArguments.Select(argument => argument.ToDisplayString()));
-				
-				context.ReportDiagnostic(Diagnostic.Create(descripter, Location.None, symbol.Name, arguments, symbol.Kind));
-			}
+			var userResolvers = syntaxFinder.GetUserResolverSymbols(reciever.Classes);
 			
-			var sf = new ResolverSyntaxFinder();
-			var symbols = sf.FindResolverSymbols(compilation).ToArray();
-
-			var userSyncResolvers = reciever.GetSyncResolvers(compilation);
-
-			var allSymbols = userSyncResolvers.Any() ? symbols.Concat(userSyncResolvers): symbols;
-
-			var (resolverInfo, commandInfo) = BuildInformationClasses(allSymbols, commandSymbols);
+			var (resolverInfo, commandInfo) = BuildInformationClasses(userResolvers, commandSymbols);
 			
 			var commandHandlerSource = BuildCommandHandlerSource(resolverInfo.ToArray(), commandInfo);
 
+			File.WriteAllText(@"C:\Users\sirbr\Documents\coding\projects\C#\mandatum\Mandatum.Generators\obj\GeneratedFiles\CommandHandler.cs", commandHandlerSource);
+			
 			context.AddSource("Mandatum.CommandHandler.cs", commandHandlerSource);
 
 		}
