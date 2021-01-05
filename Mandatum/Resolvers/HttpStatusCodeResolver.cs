@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace Mandatum.Resolvers
 {
-	public class IHttpStatusCodeResolver : IAsyncResolver<HttpStatusCode>
+	public class HttpStatusCodeResolver : IAsyncResolver<HttpStatusCode>
 	{
 		public async Task<HttpStatusCode> ResolveAsync(string message)
 		{

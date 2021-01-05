@@ -57,9 +57,6 @@ namespace Mandatum.Generators.SyntaxReceivers
 			// TODO: add a class for this like we have for CommandDeclarationInfo
 
 			var resolvers = new List<INamedTypeSymbol>();
-			var intResolver = currentCompilation.GetTypeByMetadataName("Mandatum.Resolvers.Int32Resolver");
-			
-			resolvers.Add(intResolver); 
 			// TODO: this whole class is a mess. All of this logic should be extracted, and this should be handled by something else.
 			
 			foreach(var @class in _classes)

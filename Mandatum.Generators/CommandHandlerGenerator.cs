@@ -57,10 +57,17 @@ namespace Mandatum.Generators
 				
 				context.ReportDiagnostic(Diagnostic.Create(descripter, Location.None, symbol.Name, arguments, symbol.Kind));
 			}
-
-			var (resolverInfo, commandInfo) = BuildInformationClasses(reciever.GetSyncResolvers(compilation), commandSymbols);
 			
-			var commandHandlerSource = BuildCommandHandlerSource(resolverInfo, commandInfo);
+			var sf = new ResolverSyntaxFinder();
+			var symbols = sf.FindResolverSymbols(compilation).ToArray();
+
+			var userSyncResolvers = reciever.GetSyncResolvers(compilation);
+
+			var allSymbols = userSyncResolvers.Any() ? symbols.Concat(userSyncResolvers): symbols;
+
+			var (resolverInfo, commandInfo) = BuildInformationClasses(allSymbols, commandSymbols);
+			
+			var commandHandlerSource = BuildCommandHandlerSource(resolverInfo.ToArray(), commandInfo);
 
 			context.AddSource("Mandatum.CommandHandler.cs", commandHandlerSource);
 
@@ -74,7 +81,7 @@ namespace Mandatum.Generators
 				Name = resolver.Name,
 				ContainingNamespace = resolver.ContainingNamespace.ToDisplayString(),
 				ConversionType = resolver.Interfaces.First(x => x.Name.StartsWith("IResolver")).TypeArguments.First(),
-				IsAsync = resolver.Interfaces.First().Name.EndsWith("Async")
+				IsAsync = resolver.Interfaces.First().Name.StartsWith("IAsync")
 			}), 
 				commandSymbols.Select(command => new CommandDeclarationInfo()
 				{
@@ -86,7 +93,7 @@ namespace Mandatum.Generators
 				);
 		}
 
-		private string BuildCommandHandlerSource(IEnumerable<ResolverDeclarationInfo> resolvers, IEnumerable<CommandDeclarationInfo> commands)
+		private string BuildCommandHandlerSource(ResolverDeclarationInfo[] resolvers, IEnumerable<CommandDeclarationInfo> commands)
 		{
 			var commandHandlerClassBuilder = new StringBuilder();
 			var ctorBuilder = new StringBuilder();
@@ -145,11 +152,13 @@ namespace Mandatum.Generators
 				
 				foreach (var argument in command.Arguments)
 				{
-					var argumentResolver = resolvers.First(resolver =>
+					var argumentResolver = resolvers.First(func);
+
+					bool func(ResolverDeclarationInfo resolver)
 					{
 						var isEqual = SymbolEqualityComparer.Default.Equals(resolver.ConversionType, argument);
 						return isEqual;
-					});
+					}
 
 					var async = argumentResolver.IsAsync;
 					localMethodsBuilder.AppendLine($"var arg{index} = {(async ? "await" : "")} _{argumentResolver.Name}.Resolve{(async ? "Async" : "")}(split[{index}]);");
