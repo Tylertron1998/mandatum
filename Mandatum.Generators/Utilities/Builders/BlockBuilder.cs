@@ -1,17 +1,20 @@
-﻿namespace Mandatum.Generators.Utilities.Builders
+﻿using System.Diagnostics;
+
+namespace Mandatum.Generators.Utilities.Builders
 {
+	[DebuggerDisplay("{ToDebuggerString()}")]
 	public class BlockBuilder : Builder
 	{
-		public BlockBuilder(ushort padding) : base((ushort)(padding + 1))
+		public BlockBuilder(ushort padding) : base(padding)
 		{
-			Append("{");
+			AppendLine("{");
 			Padding += 1;
 		}
 
 		public override string ToString()
 		{
 			Padding -= 1;
-			Append("}");
+			AppendLine("}");
 			return base.ToString();
 		}
 	}

@@ -1,12 +1,10 @@
-﻿using System;
+﻿using System.Diagnostics;
 
 namespace Mandatum.Generators.Utilities.Builders
 {
+	[DebuggerDisplay("{ToDebuggerString()}")]
 	public class ClassBuilder : Builder
 	{
-		public string Name { get; }
-		public string Namespace { get; }
-
 		public ClassBuilder(string name,
 			string @namespace,
 			Accessibility accessibility,
@@ -15,10 +13,6 @@ namespace Mandatum.Generators.Utilities.Builders
 			Name = name;
 			Namespace = @namespace;
 
-			Append($"namespace {Namespace} {{");
-			Padding += 1;
-			AppendLine();
-
 			if (namespaces is not null)
 			{
 				foreach (var namespaceToImport in namespaces)
@@ -26,36 +20,32 @@ namespace Mandatum.Generators.Utilities.Builders
 					AppendLine($"using {namespaceToImport};");
 				}
 			}
+			
+			AppendLine();
+			
+			AppendLine($"namespace {Namespace}");
+			AppendLine("{");
+			Padding += 1;
 
 			var accessiblityString = accessibility.ToKeyword();
 
-			AppendLine($"{accessibility} class {name}");
+			AppendLine($"{accessiblityString} class {name}");
 			AppendLine("{");
 			Padding += 1;
 		}
 
-		public void AddField(string name,
-			string type,
-			Accessibility accessibility,
-			GetterType getter = GetterType.None,
-			SetterType setter = SetterType.None)
+		public string Name { get; }
+		public string Namespace { get; }
+
+		public void AddField(string name, string type, Accessibility accessibility)
 		{
-			var ending = "";
-
-			if (getter != GetterType.None && setter != SetterType.None)
-			{
-				var getterString = getter.GetKeyword();
-				var setterString = setter.GetKeyword();
-
-				ending = $" {{{setterString} {getterString}}}";
-			}
-			else
-			{
-				ending = ";";
-			}
-
-
-			AppendLine($"{accessibility.ToKeyword()} {type} {name}{ending}");
+			AppendLine($"{accessibility.ToKeyword()} {type} {name};");
+		}
+		
+		public void AddProperty(string name, string type, Accessibility accessibility, GetterType getter, SetterType setter)
+		{
+			var ending = $"{{ {getter.GetKeyword()} {setter.GetKeyword()} }}";
+			AppendLine($"{accessibility.ToKeyword()} {type} {name} {ending}");
 		}
 
 		public void AddMethod(string name,
@@ -65,11 +55,10 @@ namespace Mandatum.Generators.Utilities.Builders
 			string[] parameters = null)
 		{
 			var parameterString = parameters is null ? "" : string.Join(",", parameters);
-
+			
 			AppendLine($"{accessibility.ToKeyword()} {returnType} {name}({parameterString})");
 
-			AppendLine(content.ToString());
-
+			Append(content.ToString(), false);
 		}
 
 		public override string ToString()

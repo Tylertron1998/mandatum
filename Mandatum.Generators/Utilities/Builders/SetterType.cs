@@ -15,7 +15,7 @@
 		{
 			return getterOrSetterType switch
 			{
-				SetterType.Public => "public set;",
+				SetterType.Public => "set;",
 				SetterType.Private => "private set;",
 				SetterType.Internal => "internal set;",
 				SetterType.Protected => "protected set;",

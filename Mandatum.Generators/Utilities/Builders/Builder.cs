@@ -1,23 +1,25 @@
-﻿using System.Linq;
+﻿using System.Diagnostics;
+using System.Linq;
 using System.Text;
 
 namespace Mandatum.Generators.Utilities.Builders
 {
+	[DebuggerDisplay("{ToDebuggerString()}")]
 	public abstract class Builder
 	{
-		protected ushort Padding;
-		private readonly StringBuilder _builder;
+		public ushort Padding;
+		protected readonly StringBuilder StringBuilder;
 
 		protected Builder(ushort padding)
 		{
 			Padding = padding;
-			_builder = new StringBuilder();
+			StringBuilder = new StringBuilder();
 		}
 
-		protected void Append(string content)
+		public void Append(string content, bool pad = true)
 		{
-			var padding = GetPadding();
-			_builder.Append($"{padding}{content}");
+			var padding = pad ? GetPadding() : "";
+			StringBuilder.Append($"{padding}{content}");
 		}
 
 		public BlockBuilder GetBuilder()
@@ -25,23 +27,26 @@ namespace Mandatum.Generators.Utilities.Builders
 			return new BlockBuilder(Padding);
 		}
 
-		protected void AppendLine(string content = "")
+		public void AppendLine(string content = "", bool pad = true)
 		{
 			if (content == "")
 			{
-				_builder.AppendLine();
+				StringBuilder.AppendLine();
 			}
 			else
 			{
-				var padding = GetPadding();
-				_builder.AppendLine($"{padding}{content}");
+				var padding = pad ? GetPadding() : "";
+				StringBuilder.AppendLine($"{padding}{content}");
 			}
 		}
 
 		public override string ToString()
 		{
-			return _builder.ToString();
+			return StringBuilder.ToString();
 		}
+
+		private string ToDebuggerString() => StringBuilder.ToString();
+		
 
 		private string GetPadding()
 		{
